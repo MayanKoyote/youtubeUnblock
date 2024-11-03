@@ -4,8 +4,8 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=youtubeUnblock
 PKG_VERSION:=1.0.0
-PKG_REV:=58f4802f6466e48734d303ff0a2deb2bfe9e7f16
-PKG_RELEASE:=1
+PKG_REV:=562f17e932547f9d92111d6c9245c6170931ca1d
+PKG_RELEASE:=4
 
 PKG_SOURCE_URL:=https://github.com/Waujito/youtubeUnblock.git
 PKG_SOURCE_PROTO:=git
@@ -48,8 +48,6 @@ define Package/youtubeUnblock/install
 	$(INSTALL_BIN) ./files/etc/init.d/youtubeUnblock $(1)/etc/init.d/youtubeUnblock
 	$(INSTALL_DIR) $(1)/etc/uci-defaults
 	$(INSTALL_BIN) ./files/etc/uci-defaults/99-youtubeUnblock.sh $(1)/etc/uci-defaults/99-youtubeUnblock.sh
-	$(INSTALL_DIR) $(1)/usr/share/nftables.d/ruleset-post/
-	$(INSTALL_DATA) ./files/nftables.d/537-youtubeUnblock.nft $(1)/usr/share/nftables.d/ruleset-post/537-youtubeUnblock.nft
 	$(INSTALL_DIR) $(1)/usr/share/youtubeUnblock/
 	$(INSTALL_BIN) ./files/etc/uci-defaults/99-youtubeUnblock.sh $(1)/usr/share/youtubeUnblock/youtubeUnblock_defaults.sh
 endef
