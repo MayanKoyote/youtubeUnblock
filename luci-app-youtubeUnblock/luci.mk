@@ -85,18 +85,18 @@ define findrev
       if [ -n "$$1" ]; then
         secs="$$(($$1 % 86400))"; \
         yday="$$(date --utc --date="@$$1" "+%y.%j")"; \
-        printf '%s.%05d~%s' "$$yday" "$$secs" "$$2"; \
+        printf 'git-%s.%05d-%s' "$$yday" "$$secs" "$$2"; \
       else \
-        echo "0"; \
+        echo "unknown"; \
       fi; \
     else \
       ts=$$(find . -type f $(if $(1),-not) -path './po/*' -printf '%T@\n' 2>/dev/null | sort -rn | head -n1 | cut -d. -f1); \
       if [ -n "$$ts" ]; then \
         secs="$$(($$ts % 86400))"; \
         date="$$(date --utc --date="@$$ts" "+%y%m%d")"; \
-        printf '0.%s.%05d' "$$date" "$$secs"; \
+        printf '%s.%05d' "$$date" "$$secs"; \
       else \
-        echo "0"; \
+        echo "unknown"; \
       fi; \
     fi \
   )
@@ -153,7 +153,7 @@ ifneq ($(LUCI_SUBMENU),none)
 endif
   TITLE:=$(if $(LUCI_TITLE),$(LUCI_TITLE),LuCI $(LUCI_NAME) $(LUCI_TYPE))
   DEPENDS:=$(LUCI_DEPENDS)
-  VERSION:=$(if $(PKG_VERSION),$(if $(PKG_RELEASE),$(PKG_VERSION)-$(PKG_RELEASE),$(PKG_VERSION)),$(PKG_SRC_VERSION))
+  VERSION:=git20241125~9a50ee5-23.05.5
   $(if $(LUCI_EXTRA_DEPENDS),EXTRA_DEPENDS:=$(LUCI_EXTRA_DEPENDS))
   $(if $(LUCI_PKGARCH),PKGARCH:=$(LUCI_PKGARCH))
   $(if $(PKG_PROVIDES),PROVIDES:=$(PKG_PROVIDES))

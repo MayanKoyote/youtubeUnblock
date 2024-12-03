@@ -20,7 +20,7 @@ define Package/youtubeUnblock
 	DEPENDS:=+libpthread
 	URL:=https://github.com/Waujito/youtubeUnblock
 	MAINTAINER:=Vadim Vetrov <vetrovvd@gmail.com>
-	VERSION:=$(PKG_VERSION)~$(shell echo $(PKG_REV) | cut -c 1-7)-r$(PKG_RELEASE)
+	VERSION:=git20241202~5ee77d5-23.05.5
 endef
 
 define Package/youtubeUnblock/description
