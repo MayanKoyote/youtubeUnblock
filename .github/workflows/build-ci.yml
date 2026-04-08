@@ -21,7 +21,7 @@ jobs:
       sha: ${{ steps.gh.outputs.sha }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: GH
         id: gh
@@ -49,10 +49,10 @@ jobs:
         branch: [latest-stable]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ github.workspace }}/.ccache
           key: ccache-${{ matrix.arch }}-${{ github.run_id }}
@@ -93,7 +93,7 @@ jobs:
 
       - name: Upload artifacts
         if: steps.build.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: youtubeUnblock-static-${{ matrix.arch }}
           path: ./**/youtubeUnblock*.tar.gz
@@ -121,7 +121,7 @@ jobs:
             tool: armv7-unknown-linux-musleabi
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up build tools
         env:
@@ -156,7 +156,7 @@ jobs:
 
       - name: Upload artifacts
         if: steps.build.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: youtubeUnblock-static-${{ matrix.arch }}
           path: ./**/youtubeUnblock*.tar.gz
@@ -208,7 +208,7 @@ jobs:
       options: --user root
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: 'openwrt'
 
@@ -258,7 +258,7 @@ jobs:
 
       - name: Upload packages
         if: steps.build.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: youtubeUnblock-${{ matrix.branch }}-${{ matrix.arch }}
           path: /builder/youtubeUnblock*.${{ matrix.package_extension }}
@@ -284,7 +284,7 @@ jobs:
       options: --user root
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: 'openwrt'
 
@@ -325,7 +325,7 @@ jobs:
 
       - name: Upload packages
         if: steps.build.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: luci-app-youtubeUnblock-${{ matrix.branch }}
           path: /builder/luci-app-youtubeUnblock*.${{ matrix.package_extension }}
@@ -349,7 +349,7 @@ jobs:
       options: --user root
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: 'openwrt'
 
@@ -380,7 +380,7 @@ jobs:
 
       - name: Upload packages
         if: steps.build.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: youtubeUnblock-entware-${{ matrix.arch }}
           path: /home/me/Entware/youtubeUnblock*.ipk
@@ -394,7 +394,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
 
       - name: Upload assets
         uses: slord399/action-automatic-releases@v1.0.1
