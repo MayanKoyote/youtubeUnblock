@@ -168,9 +168,9 @@ jobs:
       matrix:
         branch:
           - openwrt-24.10
-          - SNAPSHOT
+          - openwrt-25.12
         include:
-          - branch: SNAPSHOT
+          - branch: openwrt-25.12
             package_extension: apk
           - branch: openwrt-24.10
             package_extension: ipk
@@ -201,8 +201,8 @@ jobs:
           - mipsel_mips32
           - x86_64
         exclude:
-          - branch: SNAPSHOT
-            arch: arm_mpcore
+          - branch: openwrt-25.12
+            arch: mips_4kec
     container:
       image: openwrt/sdk:${{ matrix.arch }}-${{ matrix.branch }}
       options: --user root
@@ -270,12 +270,12 @@ jobs:
     strategy:
       matrix:
         branch:
-          - openwrt-23.05
-          - SNAPSHOT
+          - openwrt-24.10
+          - openwrt-25.12
         arch:
           - x86_64
         include:
-          - branch: SNAPSHOT
+          - branch: openwrt-25.12
             package_extension: apk
           - branch: openwrt-24.10
             package_extension: ipk
