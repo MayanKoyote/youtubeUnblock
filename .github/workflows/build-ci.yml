@@ -21,7 +21,7 @@ jobs:
       sha: ${{ steps.gh.outputs.sha }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: GH
         id: gh
@@ -49,10 +49,10 @@ jobs:
         branch: [latest-stable]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ github.workspace }}/.ccache
           key: ccache-${{ matrix.arch }}-${{ github.run_id }}
@@ -93,7 +93,7 @@ jobs:
 
       - name: Upload artifacts
         if: steps.build.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: youtubeUnblock-static-${{ matrix.arch }}
           path: ./**/youtubeUnblock*.tar.gz
@@ -121,7 +121,7 @@ jobs:
             tool: armv7-unknown-linux-musleabi
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up build tools
         env:
@@ -156,7 +156,7 @@ jobs:
 
       - name: Upload artifacts
         if: steps.build.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: youtubeUnblock-static-${{ matrix.arch }}
           path: ./**/youtubeUnblock*.tar.gz
@@ -168,6 +168,12 @@ jobs:
       matrix:
         branch:
           - openwrt-24.10
+          - openwrt-25.12
+        include:
+          - branch: openwrt-25.12
+            package_extension: apk
+          - branch: openwrt-24.10
+            package_extension: ipk
         arch:
           - aarch64_cortex-a53
           - aarch64_cortex-a72
@@ -194,12 +200,15 @@ jobs:
           - mipsel_74kc
           - mipsel_mips32
           - x86_64
+        exclude:
+          - branch: openwrt-25.12
+            arch: mips_4kec
     container:
       image: openwrt/sdk:${{ matrix.arch }}-${{ matrix.branch }}
       options: --user root
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: 'openwrt'
 
@@ -209,7 +218,8 @@ jobs:
           RELEASE: ${{ needs.prepare.outputs.release }}
           SHA: ${{ needs.prepare.outputs.sha }}
         run: |
-          sed -i "s/PKG_REV:=.*$/PKG_REV:=$SHA/;s/PKG_VERSION:=.*$/PKG_VERSION:=$VERSION-$RELEASE-$SHA/" youtubeUnblock/Makefile
+          sed -i "s/PKG_REV:=.*$/PKG_REV:=$SHA/;s/PKG_VERSION:=.*$/PKG_VERSION:=$VERSION/;s/PKG_RELEASE:=.*$/PKG_RELEASE:=$RELEASE/;" youtubeUnblock/Makefile
+
 
       - name: Initilalize SDK
         id: init_sdk
@@ -220,6 +230,15 @@ jobs:
         working-directory: /builder
         run: |
           HOME=/builder ./setup.sh
+
+      - name: Add signing key
+        if: matrix.package_extension == 'apk'
+        id: signing_key
+        env:
+          SIGNING_KEY: ${{ secrets.EC_PRIVATE_KEY }}
+        working-directory: /builder
+        run: |
+          ([ -n "$SIGNING_KEY" ] && echo "$SIGNING_KEY" > private-key.pem) || true
 
       - name: Build packages
         id: build
@@ -235,35 +254,39 @@ jobs:
           ./scripts/feeds install -a -p youtubeUnblock
           make defconfig
           make package/youtubeUnblock/compile V=s
-          mv $(find ./bin -type f -name 'youtubeUnblock*.ipk') ./youtubeUnblock-$VERSION-$RELEASE-$SHA-${{ matrix.arch }}-${{ matrix.branch }}.ipk
+          mv $(find ./bin -type f -name "youtubeUnblock*.${{ matrix.package_extension }}") ./youtubeUnblock-$VERSION-$RELEASE-$SHA-${{ matrix.arch }}-${{ matrix.branch }}.${{ matrix.package_extension }}
 
       - name: Upload packages
         if: steps.build.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: youtubeUnblock-${{ matrix.branch }}-${{ matrix.arch }}
-          path: /builder/youtubeUnblock*.ipk
+          path: /builder/youtubeUnblock*.${{ matrix.package_extension }}
           if-no-files-found: error
 
   build-openwrt-luci:
     needs: prepare
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        branch:
+          - openwrt-24.10
+          - openwrt-25.12
+        arch:
+          - x86_64
+        include:
+          - branch: openwrt-25.12
+            package_extension: apk
+          - branch: openwrt-24.10
+            package_extension: ipk
     container:
-      image: openwrt/sdk:x86_64-openwrt-24.10
+      image: openwrt/sdk:${{ matrix.arch }}-${{ matrix.branch }}
       options: --user root
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: 'openwrt'
-
-      - name: Prepare build
-        env:
-          VERSION: ${{ needs.prepare.outputs.version }}
-          RELEASE: ${{ needs.prepare.outputs.release }}
-          SHA: ${{ needs.prepare.outputs.sha }}
-        run: |
-          sed -i "s/PKG_REV:=.*$/PKG_REV:=$SHA/;s/PKG_VERSION:=.*$/PKG_VERSION:=$VERSION-$RELEASE-$SHA/" youtubeUnblock/Makefile
 
       - name: Initilalize SDK
         id: init_sdk
@@ -274,6 +297,15 @@ jobs:
         working-directory: /builder
         run: |
           HOME=/builder ./setup.sh
+
+      - name: Add signing key
+        if: matrix.package_extension == 'apk'
+        id: signing_key
+        env:
+          SIGNING_KEY: ${{ secrets.EC_PRIVATE_KEY }}
+        working-directory: /builder
+        run: |
+          ([ -n "$SIGNING_KEY" ] && echo "$SIGNING_KEY" > private-key.pem) || true
 
       - name: Build packages
         id: build
@@ -289,14 +321,14 @@ jobs:
           ./scripts/feeds install -a -p youtubeUnblock
           make defconfig
           make package/luci-app-youtubeUnblock/compile V=s
-          mv $(find ./bin -type f -name 'luci-app-youtubeUnblock*.ipk') ./luci-app-youtubeUnblock-$VERSION-$RELEASE-$SHA.ipk
+          mv $(find ./bin -type f -name 'luci-app-youtubeUnblock*.${{ matrix.package_extension }}') ./luci-app-youtubeUnblock-$VERSION-$RELEASE-$SHA.${{ matrix.package_extension }}
 
       - name: Upload packages
         if: steps.build.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: luci-app-youtubeUnblock
-          path: /builder/luci-app-youtubeUnblock*.ipk
+          name: luci-app-youtubeUnblock-${{ matrix.branch }}
+          path: /builder/luci-app-youtubeUnblock*.${{ matrix.package_extension }}
           if-no-files-found: error
 
   build-entware:
@@ -317,7 +349,7 @@ jobs:
       options: --user root
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: 'openwrt'
 
@@ -327,7 +359,7 @@ jobs:
           RELEASE: ${{ needs.prepare.outputs.release }}
           SHA: ${{ needs.prepare.outputs.sha }}
         run: |
-          sed -i "s/PKG_REV:=.*$/PKG_REV:=$SHA/;s/PKG_VERSION:=.*$/PKG_VERSION:=$VERSION-$RELEASE-$SHA/" youtubeUnblockEntware/Makefile
+          sed -i "s/PKG_REV:=.*$/PKG_REV:=$SHA/;s/PKG_VERSION:=.*$/PKG_VERSION:=$VERSION/;s/PKG_RELEASE:=.*$/PKG_RELEASE:=$RELEASE/;" youtubeUnblockEntware/Makefile
 
       - name: Build packages
         id: build
@@ -348,7 +380,7 @@ jobs:
 
       - name: Upload packages
         if: steps.build.outcome == 'success'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: youtubeUnblock-entware-${{ matrix.arch }}
           path: /home/me/Entware/youtubeUnblock*.ipk
@@ -362,7 +394,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
 
       - name: Upload assets
         uses: slord399/action-automatic-releases@v1.0.1
@@ -374,5 +406,7 @@ jobs:
           title: 'Development build'
           files: |
             ./**/youtubeUnblock*.ipk
+            ./**/youtubeUnblock*.apk
             ./**/youtubeUnblock*.tar.gz
             ./**/luci-app-youtubeUnblock*.ipk
+            ./**/luci-app-youtubeUnblock*.apk
